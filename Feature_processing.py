@@ -1,3 +1,7 @@
+from tqdm import tqdm
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
+
 def get_indices(list_of_id):
     current_ID = ''
     current_subset = []
@@ -60,8 +64,29 @@ def adaptive_boards(arr, N=2000):
 
     counters.append(counter)
     boards.append(cur_boarder)
-    return boards, counters
+    
+    map_array = []
+    for i, num in enumerate(counters):
+        map_array += [str(i)] * num
+            
+    return map_array
 
 def save_features(train, test, name):
-    train.to_pickle('../Features/Train/' + name + '.pkl')
-    test.to_pickle('../Features/Test/' + name + '.pkl')
+    prefix = '25_'
+    train.to_pickle('../Features/Train/' + prefix + name + '.pkl')
+    test.to_pickle('../Features/Test/' + prefix + name + '.pkl')
+    
+def fit_transform_tf_idf(train_sent, test_sent, name):
+    model_tf_idf = TfidfVectorizer()
+    model_tf_idf.fit(train_sent.values)
+    X_train, X_test = model_tf_idf.transform(train_sent.values), model_tf_idf.transform(test_sent.values) 
+
+    names = [name + '_' + str(i) for i in range(X_train.shape[1])]
+
+    df_train = pd.SparseDataFrame(X_train, columns=names).fillna(0).to_dense()
+    df_train = pd.concat([pd.Series(train_sent.index), df_train], axis=1)
+
+    df_test = pd.SparseDataFrame(X_test, columns=names).fillna(0).to_dense()
+    df_test = pd.concat([pd.Series(test_sent.index), df_test], axis=1)
+
+    return df_train, df_test

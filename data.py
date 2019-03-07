@@ -23,7 +23,7 @@ def preprocess_raw_data_to_one_file():
          
     return DATA
 
-def separate_data(data, target, test_ID_size=0.1, test_Time_size=0.2):
+def separate_data(data, target, test_ID_size=0.15, test_Time_size=0.2, seed=666):
     """Separates data into train and test parts
         
         Parameters
@@ -45,10 +45,12 @@ def separate_data(data, target, test_ID_size=0.1, test_Time_size=0.2):
         Test :
         """
     
+    target = target.sample(len(target))
     X_train, X_test, y_train, y_test = train_test_split(target.ID, 
                                                         target.target, 
                                                         stratify  = target.target,
-                                                        test_size = test_ID_size)
+                                                        test_size = test_ID_size,
+                                                        random_state = seed)
 
     train_ID = pd.concat([X_train, y_train], axis=1)
     test_ID  =  pd.concat([X_test,  y_test ], axis=1)
@@ -58,8 +60,8 @@ def separate_data(data, target, test_ID_size=0.1, test_Time_size=0.2):
 
     separator = int(data.Time.max() * (1 - test_Time_size))
 
-    train = train[train.Time < separator]
-    test = test[test.Time >= separator]
+    # train = train[train.Time < separator]
+    # test = test[test.Time >= separator]
 
     av_record_length_train = train.ID.value_counts().mean()
     av_record_length_test  = test.ID.value_counts().mean()

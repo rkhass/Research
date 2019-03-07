@@ -31,11 +31,29 @@ def get_roc_auc_score(prediction, y_test):
     
     return value
 
+def get_pr_auc_score2(prediction, y_test):
+    return average_precision_score(y_test, prediction)
+
+
 def get_pr_auc_score(prediction, y_test):
     value = np.round(average_precision_score(y_test, prediction[:, 1]),4)
     print('PR AUC score:',  value)
     
     return value
+
+def plot_pr_auc(stats):
+    data_curr = []
+    sizes = stats.visits_num.unique()
+    sizes.sort()
+    for i in sizes:
+        tmp = stats[stats.visits_num==i]
+        v = get_pr_auc_score2(tmp.prob.values, tmp.real.values)
+        data_curr.append([i, v])
+        
+    data_df = pd.DataFrame(data_curr).dropna()
+    data_df[2] = data_df[1].rolling(2).mean()
+    plt.figure(figsize=(15, 6))
+    plt.plot(*data_df[[0, 2]].values.T)    
     
 def plot_curves(prediction, y_test):
     tpr, fpr, _ = roc_curve(y_test, prediction[:,1])
@@ -128,59 +146,3 @@ def construct_sentences(data, column_name, dropna=True):
     sentences = [' '.join(sent) for sent in sentences]
     
     return sentences
-
-def prepare_features(DATA):
-    indices = get_indices(DATA)
-    
-    vals = DATA.BETRAG / DATA.ANZAHL
-    DATA.BETRAG = np.log(vals - np.min(vals, 0) +  1)
-    
-    betrag_mean = DATA.groupby(['ID'])['BETRAG'].mean()
-    betrag_std = DATA.groupby(['ID'])['BETRAG'].std().fillna(0)
-    betrag_min = DATA.groupby(['ID'])['BETRAG'].min()
-    betrag_max = DATA.groupby(['ID'])['BETRAG'].max()
-    betrag_median = DATA.groupby(['ID'])['BETRAG'].median()
-
-    betrag_all = pd.concat([betrag_mean, betrag_std, betrag_min, betrag_max, betrag_median], axis=1, keys=
-              ['BETRAG_mean', 'BETRAG_std', 'BETRAG_min', 'BETRAG_max', 'BETRAG_median']).reset_index()
-    
-    betrag_data = []
-    ticks = np.linspace(2, 6, 100)
-    ids = DATA.ID.unique()
-    for i, Id in enumerate(ids):
-        indices[i]
-        betrag_data.append(np.histogram(DATA.iloc[indices[i]]['BETRAG'], ticks)[0])
-        
-    betrag_data = pd.DataFrame(betrag_data, columns = ['betrag' + str(np.round(val, 2)) for val in ticks[:-1]])
-    betrag_data = pd.concat([pd.Series(ids, name='ID'), betrag_data], axis=1)
-    
-    faktor_mean = DATA.groupby(['ID'])['FAKTOR'].mean()
-    faktor_std = DATA.groupby(['ID'])['FAKTOR'].std().fillna(0)
-    faktor_min = DATA.groupby(['ID'])['FAKTOR'].min()
-    faktor_max = DATA.groupby(['ID'])['FAKTOR'].max()
-    faktor_median = DATA.groupby(['ID'])['FAKTOR'].median()
-
-    faktor_all = pd.concat([faktor_mean, faktor_std, faktor_min, faktor_max, faktor_median], axis=1, keys=
-              ['FAKTOR_mean', 'FAKTOR_std', 'FAKTOR_min', 'FAKTOR_max', 'FAKTOR_median']).reset_index()
-
-    DATA.TYP.fillna(-1, inplace=True)
-    typ_mean = DATA.groupby(['ID'])['TYP'].mean()
-    typ_std = DATA.groupby(['ID'])['TYP'].std().fillna(0)
-    typ_min = DATA.groupby(['ID'])['TYP'].min()
-    typ_max = DATA.groupby(['ID'])['TYP'].max()
-    typ_median = DATA.groupby(['ID'])['TYP'].median()
-
-    typ_all = pd.concat([typ_mean, typ_std, typ_min, typ_max, typ_median], axis=1, keys=
-              ['TYP_mean', 'TYP_std', 'TYP_min', 'TYP_max', 'TYP_median']).reset_index()
-    
-    DATA.RECHNUNGSBETRAG = np.log(DATA.RECHNUNGSBETRAG - np.min(DATA.RECHNUNGSBETRAG, 0) +  1)
-    
-    data = DATA.drop_duplicates(subset=['ID'])[['ID', 'RECHNUNGSBETRAG', 'ALTER', 'GESCHLECHT', 'VERSICHERUNG', 'target']].reset_index(drop=True)
-
-    data = data.merge(betrag_all, on='ID', how='inner')
-    data = data.merge(betrag_data, on='ID', how='inner')
-    data = data.merge(typ_all, on='ID', how='inner')
-    data = data.merge(faktor_all, on='ID', how='inner')
-    
-    return data
-   
