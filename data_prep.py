@@ -55,10 +55,13 @@ if __name__ == '__main__':
     data['target'] = data['adj'].astype(bool).astype(int)
     data['treatment'] = data['treatment'].fillna(value='<UNK>')
     data['treatment_type'] = data['treatment_type'].fillna(value='<UNK>')
+    data['billing_type'] = data['billing_type'].fillna(value='<UNK>')
     data['cost_type'] = data['cost_type'].fillna(value='<UNK>')
     data['ben_type'] = data['ben_type'].fillna(value='<UNK>')
 
-    # Removing of otliers
+
+    # Removing of outliers
+    data = data[data['treatment'] != '<UNK>'] # removed unknown treatments
     data = data[data['adj'] >= 0] # removed, where korrektur < 0
     data = data[data['cost'] >= 0] # removed, where cost < 0
     data = data.drop(columns=['speciality']) # removed due to duplication

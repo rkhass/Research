@@ -2,7 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import GroupKFold
 import pandas as pd
 import numpy as np
-from glove import Corpus, Glove
+# from glove import Corpus, Glove
 from multiprocessing import Pool
 
 
@@ -98,18 +98,20 @@ def statistics(df, on):
 
     groupby = df.groupby('id')[on]
 
+    s = groupby.sum()
+    log_sum = np.log(s - s.min() + 1)
     mean = groupby.mean()
     std = groupby.std().fillna(0)
     minimum = groupby.min()
     maximum = groupby.max()
     median = groupby.median()
 
-    funcs = ['mean', 'std', 'min', 'max', 'median']
+    funcs = ['log_sum', 'mean', 'std', 'min', 'max', 'median']
 
     keys = [on + '_' + func for func in funcs]
 
     features = pd.concat(
-        [mean, std, minimum, maximum, median],
+        [log_sum, mean, std, minimum, maximum, median],
         keys=keys, axis=1
         )
 
@@ -314,9 +316,9 @@ class Categorizer:
         outliers = np.where(clusters == -1)[0]
         if len(outliers) > 0:
             clusters[outliers] = cluster_id
-            print('{0} otuliers in data'.format(len(outliers)))
+            print('{0} outliers in data'.format(len(outliers)))
 
-        clusters = [str(cluster) for cluster in clusters]
+        clusters = ['cat_' + str(cluster) for cluster in clusters]
 
         return clusters
 

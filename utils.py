@@ -79,7 +79,7 @@ def plot_curves(prediction, y_test):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(average_precision))
+    plt.title('2-class Precision-Recall curve: AP={0:0.3f}'.format(average_precision))
 
     return average_precision
     
