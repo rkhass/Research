@@ -62,6 +62,7 @@ if __name__ == '__main__':
 
     # Removing of outliers
     data = data[data['treatment'] != '<UNK>'] # removed unknown treatments
+    data = data.drop(columns=['cost_type']) # removed due unknown treatments
     data = data[data['adj'] >= 0] # removed, where korrektur < 0
     data = data[data['cost'] >= 0] # removed, where cost < 0
     data = data.drop(columns=['speciality']) # removed due to duplication
